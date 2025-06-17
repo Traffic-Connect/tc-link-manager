@@ -1,0 +1,27 @@
+.hb_link_manager_container #tg_token {
+    width: 100%;
+    max-width: 400px;
+}
+
+.hb_link_manager_container #link_rewrite {
+    width: 100%;
+    max-width: 1000px;
+}
+
+.hb_link_manager_container table.prli_links {
+    max-width: 1300px;
+}
+
+.hb_link_manager_container table.prli_links span.ok {
+    color: green;
+    font-weight: bold;
+}
+
+.hb_link_manager_container table.prli_links span.error {
+    color: red;
+}
+
+.hb_link_manager_container table.form-table code {
+    border: 1px solid #000;
+    border-radius: 3px;
+}
