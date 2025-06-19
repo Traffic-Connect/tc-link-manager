@@ -4,13 +4,17 @@ class HB_Link_Manager {
 
 	public array $option;
 
-	public function __construct() {
-		$this->option = get_option( 'hb_link_manager_settings', [] );
-		add_action( 'wp', [ $this, 'cron_activation' ] );
-		add_action( 'hb_link_manager_cron_hook', [ $this, 'cron_job' ] );
-		add_filter( 'prli_target_url', [ $this, 'links_rewrite' ] );
-		add_action( 'save_post', [ $this, 'check_links_save_post' ], 10, 2 );
-		add_action( 'acf/options_page/save', [ $this, 'check_links_save_post' ], 10, 2 );
+    public array $config;
+
+    public function __construct() {
+        $this->option = get_option( 'hb_link_manager_settings', [] );
+        $this->config = require plugin_dir_path( __FILE__ ) . 'config.php';
+
+        add_action( 'wp', [ $this, 'cron_activation' ] );
+        add_action( 'hb_link_manager_cron_hook', [ $this, 'cron_job' ] );
+        add_filter( 'prli_target_url', [ $this, 'links_rewrite' ] );
+        add_action( 'save_post', [ $this, 'check_links_save_post' ], 10, 2 );
+        add_action( 'acf/options_page/save', [ $this, 'check_links_save_post' ], 10, 2 );
 	}
 
 	/**
@@ -221,8 +225,8 @@ class HB_Link_Manager {
 	 */
 	public function notification( $event, $link, $user = false ) {
 		$message_add = null;
-		$tg_token = '7553983536:AAFvENvWpU0lajPTzzO0Hl8r3dXIFC1zApM';
-		$chat_id = '-4902876387';
+        $tg_token = $this->config['telegram']['token'];
+        $chat_id = $this->config['telegram']['chat_id'];
 
 		if ( $user ) {
 			$current_user = wp_get_current_user();
