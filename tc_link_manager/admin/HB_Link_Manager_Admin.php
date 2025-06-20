@@ -7,9 +7,11 @@ use HB_Link_Manager_Helpers;
 class HB_Link_Manager_Admin {
 
 	public string $prefix;
+	public array $config;
 
 	public function __construct() {
 		$this->prefix = 'hb_link_manager_';
+		$this->config = require plugin_dir_path( TC_MU_LINK_MANAGER_FILE_PATH ) . 'config.php';
 		add_action( 'admin_menu', [ $this, 'menu' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'register_styles' ] );
 		add_action( 'admin_init', [ $this, 'plugin_settings' ] );
@@ -124,18 +126,23 @@ class HB_Link_Manager_Admin {
 					settings_fields( $this->prefix . 'common_group' );
 					do_settings_sections( $this->prefix . 'common_page' );
 				?>
-				<table class="form-table" role="presentation">
-					<tbody>
-						<tr>
-							<th scope="row">Telegram token:</th>
-							<td><code>7553983536:AAFvENvWpU0lajPTzzO0Hl8r3dXIFC1zApM</code></td>
-						</tr>
-						<tr>
-							<th scope="row">Telegram Chat ID:</th>
-							<td><code>-4902876387</code></td>
-						</tr>
-					</tbody>
-				</table>
+
+				<?php if( $this->config['telegram']['token'] !== '' && $this->config['telegram']['chat_id'] !== '' ): ?>
+					<table class="form-table" role="presentation">
+						<tbody>
+							<tr>
+								<th scope="row">Telegram token:</th>
+								<td><code><?php echo $this->config['telegram']['token']; ?></code></td>
+							</tr>
+							<tr>
+								<th scope="row">Telegram Chat ID:</th>
+								<td><code><?php echo $this->config['telegram']['chat_id']; ?></code></td>
+							</tr>
+						</tbody>
+					</table>
+				<?php else: ?>
+					<p style="color: red; font-weight: bold">Ключи для Telegram не установлены!</p>
+				<?php endif; ?>
 				<?php submit_button();?>
             </form>
         </div>

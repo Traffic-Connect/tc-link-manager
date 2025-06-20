@@ -235,14 +235,17 @@ class HB_Link_Manager {
 		}
 
 		$this->log( $event . " " . $link . "|" . $message_add );
-		require __DIR__ . "/vendor/autoload.php";
-		$bot       = new \TelegramBot\Api\BotApi( $tg_token );
-		$message   = home_url() . "\n" . $event . "\n" . $link;
-		if ( $user ) {
-			$message = home_url() . "\n" . $event . " " . $link . "\n" . $message_add;
-		}
 
-		$bot->sendMessage( $chat_id, $message );
+		if( $tg_token !== '' && $chat_id !== '' ){
+			require __DIR__ . "/vendor/autoload.php";
+			$bot       = new \TelegramBot\Api\BotApi( $tg_token );
+			$message   = home_url() . "\n" . $event . "\n" . $link;
+			if ( $user ) {
+				$message = home_url() . "\n" . $event . " " . $link . "\n" . $message_add;
+			}
+
+			$bot->sendMessage( $chat_id, $message );
+		}
 	}
 
 	/**

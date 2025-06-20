@@ -3,6 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+define( 'TC_MU_LINK_MANAGER_FILE_PATH', __FILE__ );
+
 if ( ! class_exists( 'HB_Link_Manager' ) ) :
 
 	require __DIR__ . "/HB_Link_Manager.php";
