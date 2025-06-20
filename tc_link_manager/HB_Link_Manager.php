@@ -101,7 +101,7 @@ class HB_Link_Manager {
 	 */
 	public function cron_activation() {
 		if ( ! wp_next_scheduled( 'hb_link_manager_cron_hook' ) ) {
-			wp_schedule_event( time(), 'daily', 'hb_link_manager_cron_hook' );
+			wp_schedule_event( time(), 'weekly', 'hb_link_manager_cron_hook' );
 		}
 	}
 
