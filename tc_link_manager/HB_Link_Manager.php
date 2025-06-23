@@ -10,8 +10,9 @@ class HB_Link_Manager {
         $this->option = get_option( 'hb_link_manager_settings', [] );
         $this->config = require plugin_dir_path( __FILE__ ) . 'config.php';
 
+		wp_clear_scheduled_hook('hb_link_manager_cron_hook');
         add_action( 'wp', [ $this, 'cron_activation' ] );
-        add_action( 'hb_link_manager_cron_hook', [ $this, 'cron_job' ] );
+        add_action( 'tc_link_manager_cron_hook', [ $this, 'cron_job' ] );
         add_filter( 'prli_target_url', [ $this, 'links_rewrite' ] );
         add_action( 'save_post', [ $this, 'check_links_save_post' ], 10, 2 );
         add_action( 'acf/options_page/save', [ $this, 'check_links_save_post' ], 10, 2 );
@@ -70,23 +71,22 @@ class HB_Link_Manager {
 			if ( is_wp_error( $r ) ) {
 				$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'error',
 					$r->get_error_message() );
-				$this->notification( $r->get_error_message(), $item['url'] );
+				$this->notification( $r->get_error_message(), $item['url'], false, "broken" );
 			} else {
 				if ( ! empty( $r['response']['code'] ) ) {
 					$msg                    = 'Response code: ' . $r['response']['code'];
-					$true_code_response_arr = explode( ',', $this->option['true_code_response'] );
-					$true_code_response_arr = array_map( 'trim', $true_code_response_arr );
+					$true_code_response_arr = [ 200, 301, 302, 303 ];
 					if ( in_array( $r['response']['code'], $true_code_response_arr ) ) {
 						$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'ok',
 							$r['response']['code'] );
 					} else {
 						$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'error', $msg );
-						$this->notification( 'Response code: ' . $r['response']['code'], $item['url'] );
+						$this->notification( 'Response code: ' . $r['response']['code'], $item['url'], false, "broken" );
 					}
 				} else {
 					$msg                                  = "Response code not defined";
 					$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'error', $msg );
-					$this->notification( $msg, $item['url'] );
+					$this->notification( $msg, $item['url'], false, "broken" );
 				}
 			}
 		}
@@ -100,8 +100,8 @@ class HB_Link_Manager {
 	 * Активация крона
 	 */
 	public function cron_activation() {
-		if ( ! wp_next_scheduled( 'hb_link_manager_cron_hook' ) ) {
-			wp_schedule_event( time(), 'weekly', 'hb_link_manager_cron_hook' );
+		if ( ! wp_next_scheduled( 'tc_link_manager_cron_hook' ) ) {
+			wp_schedule_event( time(), 'weekly', 'tc_link_manager_cron_hook' );
 		}
 	}
 
@@ -185,7 +185,7 @@ class HB_Link_Manager {
 				$hb_link_manager_all_links_new = $hb_link_manager_all_links;
 				foreach ( $links_all as $link ) {
 					if ( ! in_array( $link, $hb_link_manager_all_links ) ) {
-						$this->notification( "New link:", $link, true );
+						$this->notification( "New link:", $link, true, "new" );
 						$hb_link_manager_all_links_new[] = $link;
 					}
 				}
@@ -223,10 +223,10 @@ class HB_Link_Manager {
 	 * @throws \TelegramBot\Api\InvalidArgumentException
 	 * @throws Exception
 	 */
-	public function notification( $event, $link, $user = false ) {
+	public function notification( $event, $link, $user = false, $link_type ) {
 		$message_add = null;
         $tg_token = $this->config['telegram']['token'];
-        $chat_id = $this->config['telegram']['chat_id'];
+		$chat_id = $link_type == "new" ? $this->config['telegram']['chat_id_new_links'] : $this->config['telegram']['chat_id_broken_links'];
 
 		if ( $user ) {
 			$current_user = wp_get_current_user();
