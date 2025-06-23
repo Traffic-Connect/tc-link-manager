@@ -10,8 +10,9 @@ class HB_Link_Manager {
         $this->option = get_option( 'hb_link_manager_settings', [] );
         $this->config = require plugin_dir_path( __FILE__ ) . 'config.php';
 
+		wp_clear_scheduled_hook('hb_link_manager_cron_hook');
         add_action( 'wp', [ $this, 'cron_activation' ] );
-        add_action( 'hb_link_manager_cron_hook', [ $this, 'cron_job' ] );
+        add_action( 'tc_link_manager_cron_hook', [ $this, 'cron_job' ] );
         add_filter( 'prli_target_url', [ $this, 'links_rewrite' ] );
         add_action( 'save_post', [ $this, 'check_links_save_post' ], 10, 2 );
         add_action( 'acf/options_page/save', [ $this, 'check_links_save_post' ], 10, 2 );
@@ -100,8 +101,8 @@ class HB_Link_Manager {
 	 * Активация крона
 	 */
 	public function cron_activation() {
-		if ( ! wp_next_scheduled( 'hb_link_manager_cron_hook' ) ) {
-			wp_schedule_event( time(), 'weekly', 'hb_link_manager_cron_hook' );
+		if ( ! wp_next_scheduled( 'tc_link_manager_cron_hook' ) ) {
+			wp_schedule_event( time(), 'weekly', 'tc_link_manager_cron_hook' );
 		}
 	}
 
