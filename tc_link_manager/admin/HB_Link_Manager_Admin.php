@@ -127,7 +127,7 @@ class HB_Link_Manager_Admin {
 					do_settings_sections( $this->prefix . 'common_page' );
 				?>
 
-				<?php if( $this->config['telegram']['token'] !== '' && $this->config['telegram']['chat_id'] !== '' ): ?>
+				<?php if( $this->config['telegram']['token'] !== '' && $this->config['telegram']['chat_id_broken_links'] !== '' && $this->config['telegram']['chat_id_new_links'] !== '' ): ?>
 					<table class="form-table" role="presentation">
 						<tbody>
 							<tr>
@@ -135,8 +135,12 @@ class HB_Link_Manager_Admin {
 								<td><code><?php echo $this->config['telegram']['token']; ?></code></td>
 							</tr>
 							<tr>
-								<th scope="row">Telegram Chat ID:</th>
-								<td><code><?php echo $this->config['telegram']['chat_id']; ?></code></td>
+								<th scope="row">TG Chat ID (broken links):</th>
+								<td><code><?php echo $this->config['telegram']['chat_id_broken_links']; ?></code></td>
+							</tr>
+							<tr>
+								<th scope="row">TG Chat ID (new links):</th>
+								<td><code><?php echo $this->config['telegram']['chat_id_new_links']; ?></code></td>
 							</tr>
 						</tbody>
 					</table>
@@ -168,16 +172,6 @@ class HB_Link_Manager_Admin {
 				'option'       => 'link_rewrite',
 				'rows'         => 3,
 				'comment'      => 'Формат: Link ID;Url;Time1;Time2;Weekdays. Пример: 1;https://google.com;07:00;12:00;1,3,5',
-			]
-		);
-		add_settings_field( $this->prefix . 'true_code_response', 'Успешные коды ответов',
-			[ $this, 'build_field' ], $this->prefix . 'common_page', $this->prefix . 'settings_id',
-			[
-				'type'         => 'input',
-				'option_array' => $this->prefix . 'settings',
-				'label_for'    => 'true_code_response',
-				'option'       => 'true_code_response',
-				'default'      => '200,302',
 			]
 		);
 	}
