@@ -174,6 +174,16 @@ class HB_Link_Manager_Admin {
 				'comment'      => 'Формат: Link ID;Url;Time1;Time2;Weekdays. Пример: 1;https://google.com;07:00;12:00;1,3,5',
 			]
 		);
+		add_settings_field( $this->prefix . 'true_code_response', 'Успешные коды ответов',
+			[ $this, 'build_field' ], $this->prefix . 'common_page', $this->prefix . 'settings_id',
+			[
+				'type'         => 'input',
+				'option_array' => $this->prefix . 'settings',
+				'label_for'    => 'true_code_response',
+				'option'       => 'true_code_response',
+				'default'      => '200,302',
+			]
+		);
 	}
 
 	/**

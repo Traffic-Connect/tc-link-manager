@@ -75,7 +75,11 @@ class HB_Link_Manager {
 			} else {
 				if ( ! empty( $r['response']['code'] ) ) {
 					$msg                    = 'Response code: ' . $r['response']['code'];
-					$true_code_response_arr = [ 200, 301, 302, 303 ];
+					$aditional_codes = [ 200, 301, 302, 303 ];
+					$true_code_response_arr_settings = explode( ',', $this->option['true_code_response'] );
+					$true_code_response_arr_settings = array_map( 'trim', $true_code_response_arr_settings );
+					$true_code_response_arr = array_merge($true_code_response_arr_settings, array_diff($aditional_codes, $true_code_response_arr_settings));
+
 					if ( in_array( $r['response']['code'], $true_code_response_arr ) ) {
 						$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'ok',
 							$r['response']['code'] );
