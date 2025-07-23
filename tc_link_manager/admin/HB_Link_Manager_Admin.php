@@ -41,10 +41,12 @@ class HB_Link_Manager_Admin {
 		$prli_links            = HB_Link_Manager_Helpers::get_links_prli_links();
 		$links                 = $this->get_links();
 		$hb_link_manager_links = get_option( 'hb_link_manager_links', [] );
+		$plugin_data = get_plugin_data(TC_MU_LINK_MANAGER_ENTRY_FILE_PATH);
+		$current_version = $plugin_data['Version'];
 
 		?>
         <div class="wrap <?= $this->prefix ?>container">
-            <h2><?php echo get_admin_page_title() ?></h2>
+            <h2><?php echo get_admin_page_title() ?> ( v<?php echo $current_version; ?> )</h2>
             <h3>Текущие ссылки установленные в Pretty Links</h3>
             <table class="widefat striped prli_links">
                 <thead>
@@ -181,7 +183,7 @@ class HB_Link_Manager_Admin {
 				'option_array' => $this->prefix . 'settings',
 				'label_for'    => 'true_code_response',
 				'option'       => 'true_code_response',
-				'default'      => '200,302',
+				'default'      => '200,302'
 			]
 		);
 	}
@@ -214,7 +216,7 @@ class HB_Link_Manager_Admin {
 		<?php endif ?>
 
 		<?php if ( $args['type'] == 'input' ): ?>
-            <input id="<?= $option_id ?>" type="text" name="<?= $option_name ?>" value="<?= $value ?>"/>
+            <input id="<?= $option_id ?>" type="text" name="<?= $option_name ?>" value="<?= $value ?>" style="width: 100%; max-width:1000px"/>
 		<?php endif ?>
 
 		<?php if ( $args['type'] == 'select' ): ?>
