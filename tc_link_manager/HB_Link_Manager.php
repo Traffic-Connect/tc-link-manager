@@ -66,6 +66,19 @@ class HB_Link_Manager {
 	public function check_links() {
 		$hb_link_manager_links = get_option( 'hb_link_manager_links', [] );
 		$pretty_links          = HB_Link_Manager_Helpers::get_links_prli_links();
+
+		if ( ! function_exists('get_plugin_data') ) {
+            require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+        }
+
+		$plugin_data = get_plugin_data(TC_MU_LINK_MANAGER_ENTRY_FILE_PATH);
+		$current_version = $plugin_data['Version'];
+
+		if ( get_option('tc_link_manager_version') === false ) {
+			$this->option['true_code_response'] = '200,301,302,303,304,305,306,307,308';
+			update_option('hb_link_manager_settings', $this->option);
+		}
+
 		foreach ( $pretty_links as $item ) {
 			$r = wp_remote_head( $item['url'] );
 			if ( is_wp_error( $r ) ) {
@@ -96,6 +109,8 @@ class HB_Link_Manager {
 		if ( ! empty( $hb_link_manager_links ) ) {
 			update_option( 'hb_link_manager_links', $hb_link_manager_links );
 		}
+
+		update_option('tc_link_manager_version', $current_version);
 	}
 
 	/**
@@ -232,8 +247,9 @@ class HB_Link_Manager {
 
 		if ( $user ) {
 			$current_user = wp_get_current_user();
+			$user_info = isset( $_COOKIE["sso_email"] ) ? $_COOKIE["sso_email"] : $current_user->user_login;
 			$ip           = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? null;
-			$message_add  = $current_user->user_login . "(" . $ip . ")";
+			$message_add  = $user_info . "(" . $ip . ")";
 		}
 
 		$this->log( $event . " " . $link . "|" . $message_add );
