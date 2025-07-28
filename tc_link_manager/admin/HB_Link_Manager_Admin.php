@@ -183,7 +183,7 @@ class HB_Link_Manager_Admin {
 				'option_array' => $this->prefix . 'settings',
 				'label_for'    => 'true_code_response',
 				'option'       => 'true_code_response',
-				'default'      => '200,302'
+				'default'      => '200,301,302,303,304,305,306,307,308'
 			]
 		);
 	}
