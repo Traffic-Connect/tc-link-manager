@@ -129,7 +129,7 @@ class HB_Link_Manager_Admin {
 					do_settings_sections( $this->prefix . 'common_page' );
 				?>
 
-				<?php if( $this->config['telegram']['token'] !== '' && $this->config['telegram']['chat_id_broken_links'] !== '' && $this->config['telegram']['chat_id_new_links'] !== '' ): ?>
+				<?php if( $this->config['telegram']['token'] !== '' && $this->config['telegram']['chat_id_general'] !== '' && $this->config['telegram']['thread_id_new_links'] !== '' && $this->config['telegram']['thread_id_broken_links'] !== '' ): ?>
 					<table class="form-table" role="presentation">
 						<tbody>
 							<tr>
@@ -137,12 +137,16 @@ class HB_Link_Manager_Admin {
 								<td><code><?php echo $this->config['telegram']['token']; ?></code></td>
 							</tr>
 							<tr>
-								<th scope="row">TG Chat ID (broken links):</th>
-								<td><code><?php echo $this->config['telegram']['chat_id_broken_links']; ?></code></td>
+								<th scope="row">TG Chat ID:</th>
+								<td><code><?php echo $this->config['telegram']['chat_id_general']; ?></code></td>
 							</tr>
 							<tr>
-								<th scope="row">TG Chat ID (new links):</th>
-								<td><code><?php echo $this->config['telegram']['chat_id_new_links']; ?></code></td>
+								<th scope="row">TG Chat Thread ID (new links):</th>
+								<td><code><?php echo $this->config['telegram']['thread_id_new_links']; ?></code></td>
+							</tr>
+							<tr>
+								<th scope="row">TG Chat Thread ID (broken links):</th>
+								<td><code><?php echo $this->config['telegram']['thread_id_broken_links']; ?></code></td>
 							</tr>
 						</tbody>
 					</table>
