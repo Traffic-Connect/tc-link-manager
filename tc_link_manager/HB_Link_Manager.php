@@ -243,7 +243,8 @@ class HB_Link_Manager {
 	public function notification( $event, $link, $user = false, $link_type ) {
 		$message_add = null;
         $tg_token = $this->config['telegram']['token'];
-		$chat_id = $link_type == "new" ? $this->config['telegram']['chat_id_new_links'] : $this->config['telegram']['chat_id_broken_links'];
+		$chat_id = $this->config['telegram']['chat_id_general'];
+		$thread_id = $link_type == "new" ? $this->config['telegram']['thread_id_new_links'] : $this->config['telegram']['thread_id_broken_links'];
 
 		if ( $user ) {
 			$current_user = wp_get_current_user();
@@ -262,7 +263,7 @@ class HB_Link_Manager {
 				$message = home_url() . "\n" . $event . " " . $link . "\n" . $message_add;
 			}
 
-			$bot->sendMessage( $chat_id, $message );
+			$bot->sendMessage( $chat_id, $message, null, false, null, null, false, $thread_id, null, null );
 		}
 	}
 

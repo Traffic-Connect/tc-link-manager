@@ -3,7 +3,8 @@
 return [
     'telegram' => [
         'token' => '',
-        'chat_id_broken_links' => '',
-        'chat_id_new_links' => ''
+        'chat_id_general' => '',
+        'thread_id_new_links' => '',
+        'thread_id_broken_links' => ''
     ],
 ];
