@@ -240,7 +240,7 @@ class HB_Link_Manager {
 	 * @throws \TelegramBot\Api\InvalidArgumentException
 	 * @throws Exception
 	 */
-	public function notification( $event, $link, $user = false, $link_type ) {
+	public function notification( $event, $link, $user, $link_type ) {
 		$message_add = null;
         $tg_token = $this->config['telegram']['token'];
 		$chat_id = $this->config['telegram']['chat_id_general'];
