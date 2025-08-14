@@ -3,19 +3,20 @@
 class HB_Link_Manager {
 
 	public array $option;
+	public array $config;
+	private string $team_name;
 
-    public array $config;
+	public function __construct() {
+		$this->option    = get_option( 'hb_link_manager_settings', [] );
+		$this->config    = require plugin_dir_path( __FILE__ ) . 'config.php';
+		$this->team_name = $this->get_team_name();
 
-    public function __construct() {
-        $this->option = get_option( 'hb_link_manager_settings', [] );
-        $this->config = require plugin_dir_path( __FILE__ ) . 'config.php';
-
-		wp_clear_scheduled_hook('hb_link_manager_cron_hook');
-        add_action( 'wp', [ $this, 'cron_activation' ] );
-        add_action( 'tc_link_manager_cron_hook', [ $this, 'cron_job' ] );
-        add_filter( 'prli_target_url', [ $this, 'links_rewrite' ] );
-        add_action( 'save_post', [ $this, 'check_links_save_post' ], 10, 2 );
-        add_action( 'acf/options_page/save', [ $this, 'check_links_save_post' ], 10, 2 );
+		wp_clear_scheduled_hook( 'hb_link_manager_cron_hook' );
+		add_action( 'wp', [ $this, 'cron_activation' ] );
+		add_action( 'tc_link_manager_cron_hook', [ $this, 'cron_job' ] );
+		add_filter( 'prli_target_url', [ $this, 'links_rewrite' ] );
+		add_action( 'save_post', [ $this, 'check_links_save_post' ], 10, 2 );
+		add_action( 'acf/options_page/save', [ $this, 'check_links_save_post' ], 10, 2 );
 	}
 
 	/**
@@ -67,36 +68,45 @@ class HB_Link_Manager {
 		$hb_link_manager_links = get_option( 'hb_link_manager_links', [] );
 		$pretty_links          = HB_Link_Manager_Helpers::get_links_prli_links();
 
-		if ( ! function_exists('get_plugin_data') ) {
-            require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-        }
+		if ( ! function_exists( 'get_plugin_data' ) ) {
+			require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		}
 
-		$plugin_data = get_plugin_data(TC_MU_LINK_MANAGER_ENTRY_FILE_PATH);
+		$plugin_data     = get_plugin_data( TC_MU_LINK_MANAGER_ENTRY_FILE_PATH );
 		$current_version = $plugin_data['Version'];
 
-		if ( get_option('tc_link_manager_version') === false ) {
+		if ( get_option( 'tc_link_manager_version' ) === false ) {
 			$this->option['true_code_response'] = '200,301,302,303,304,305,306,307,308';
-			update_option('hb_link_manager_settings', $this->option);
+			update_option( 'hb_link_manager_settings', $this->option );
 		}
 
 		foreach ( $pretty_links as $item ) {
-			$r = wp_remote_head( $item['url'] );
-			if ( is_wp_error( $r ) ) {
+			$r             = wp_remote_head( $item['url'] );
+			$response_code = $r['response']['code'] ? intval( $r['response']['code'] ) : 0;
+
+			// Дополнительная проверка через API если первичная не прошла
+			if ( is_wp_error( $r ) || ! $response_code || $response_code != '200' ) {
+				$response_code = $this->api_link_check( $item['url'] );
+			}
+
+			if ( is_wp_error( $r ) && ! $response_code ) {
+				$error_message                        = $r->get_error_message() ?? 'unknown error';
 				$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'error',
-					$r->get_error_message() );
-				$this->notification( $r->get_error_message(), $item['url'], false, "broken" );
+					$error_message );
+				$this->notification( $error_message, $item['url'], false, "broken" );
 			} else {
-				if ( ! empty( $r['response']['code'] ) ) {
-					$msg                    = 'Response code: ' . $r['response']['code'];
+				if ( $response_code ) {
+					$msg                    = 'Response code: ' . $response_code;
 					$true_code_response_arr = explode( ',', $this->option['true_code_response'] );
 					$true_code_response_arr = array_map( 'trim', $true_code_response_arr );
 
-					if ( in_array( $r['response']['code'], $true_code_response_arr ) ) {
+					if ( in_array( $response_code, $true_code_response_arr ) ) {
 						$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'ok',
-							$r['response']['code'] );
+							$response_code );
 					} else {
 						$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'error', $msg );
-						$this->notification( 'Response code: ' . $r['response']['code'], $item['url'], false, "broken" );
+						$this->notification( 'Response code: ' . $response_code, $item['url'], false,
+							"broken" );
 					}
 				} else {
 					$msg                                  = "Response code not defined";
@@ -110,7 +120,41 @@ class HB_Link_Manager {
 			update_option( 'hb_link_manager_links', $hb_link_manager_links );
 		}
 
-		update_option('tc_link_manager_version', $current_version);
+		update_option( 'tc_link_manager_version', $current_version );
+	}
+
+	/**
+	 * Дополнительная проверка ссылки через API
+	 *
+	 * @param  string  $url
+	 *
+	 * @return bool
+	 */
+	private function api_link_check( $url ) {
+		$api_url = $this->config['api']['check-aff-link'] ?? '';
+
+		if ( empty( $api_url ) ) {
+			return 0;
+		}
+
+		$check_url = $api_url . '?link=' . urlencode( $url );
+
+		$response = wp_remote_get( $check_url, [
+			'timeout' => 30,
+			'headers' => [ 'User-Agent' => 'TC-Link-Manager/1.0' ]
+		] );
+
+		if ( is_wp_error( $response ) ) {
+			return 0;
+		}
+
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( json_last_error() !== JSON_ERROR_NONE ) {
+			return 0;
+		}
+
+		return $data['status_code'] ? intval( $data['status_code'] ) : 0;
 	}
 
 	/**
@@ -242,29 +286,75 @@ class HB_Link_Manager {
 	 */
 	public function notification( $event, $link, $user, $link_type ) {
 		$message_add = null;
-        $tg_token = $this->config['telegram']['token'];
-		$chat_id = $this->config['telegram']['chat_id_general'];
-		$thread_id = $link_type == "new" ? $this->config['telegram']['thread_id_new_links'] : $this->config['telegram']['thread_id_broken_links'];
+		$tg_token    = $this->config['telegram']['token'];
+		$chat_id     = $this->config['telegram']['chat_id_general'];
+		$thread_id   = $link_type == "new" ? $this->config['telegram']['thread_id_new_links'] : $this->config['telegram']['thread_id_broken_links'];
 
 		if ( $user ) {
 			$current_user = wp_get_current_user();
-			$user_info = isset( $_COOKIE["sso_email"] ) ? $_COOKIE["sso_email"] : $current_user->user_login;
+			$user_info    = isset( $_COOKIE["sso_email"] ) ? $_COOKIE["sso_email"] : $current_user->user_login;
 			$ip           = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? null;
 			$message_add  = $user_info . "(" . $ip . ")";
 		}
 
 		$this->log( $event . " " . $link . "|" . $message_add );
 
-		if( $tg_token !== '' && $chat_id !== '' ){
+		if ( $tg_token !== '' && $chat_id !== '' ) {
 			require __DIR__ . "/vendor/autoload.php";
-			$bot       = new \TelegramBot\Api\BotApi( $tg_token );
-			$message   = home_url() . "\n" . $event . "\n" . $link;
+			$bot = new \TelegramBot\Api\BotApi( $tg_token );
+
+			$site_info = $this->team_name ? home_url() . " (" . $this->team_name . ")" : home_url();
+
+			$message = $site_info . "\n" . $event . "\n" . $link;
 			if ( $user ) {
-				$message = home_url() . "\n" . $event . " " . $link . "\n" . $message_add;
+				$message = $site_info . "\n" . $event . " " . $link . "\n" . $message_add;
 			}
 
 			$bot->sendMessage( $chat_id, $message, null, false, null, null, false, $thread_id, null, null );
 		}
+	}
+
+	/**
+	 * Получает название команды из API менеджера
+	 *
+	 * @return string|null
+	 */
+	private function get_team_name() {
+		$manager_token = $this->config['api']['manager_token'] ?? '';
+
+		if ( empty( $manager_token ) ) {
+			return null;
+		}
+
+		// Извлекаем домен из home_url()
+		$domain = parse_url( home_url(), PHP_URL_HOST );
+
+		if ( empty( $domain ) ) {
+			return null;
+		}
+
+		$api_url     = 'https://manager.tcnct.com/api/site/team';
+		$request_url = $api_url . '?domain=' . urlencode( $domain ) . '&token=' . urlencode( $manager_token );
+
+		$response = wp_remote_get( $request_url, [
+			'timeout' => 15,
+			'headers' => [
+				'User-Agent' => 'TC-Link-Manager/1.0'
+			]
+		] );
+
+		if ( is_wp_error( $response ) ) {
+			return null;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( json_last_error() !== JSON_ERROR_NONE ) {
+			return null;
+		}
+
+		return $data['team'] ?? null;
 	}
 
 	/**
