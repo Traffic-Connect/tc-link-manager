@@ -7,4 +7,8 @@ return [
         'thread_id_new_links' => '',
         'thread_id_broken_links' => ''
     ],
+    'api' => [
+        'check-aff-link' => '',
+        'manager_token' => ''
+    ]
 ];
