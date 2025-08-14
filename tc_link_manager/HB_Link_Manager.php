@@ -309,11 +309,12 @@ class HB_Link_Manager {
 			require __DIR__ . "/vendor/autoload.php";
 			$bot = new \TelegramBot\Api\BotApi( $tg_token );
 
-			$site_info = $this->team_name ? home_url() . " (Team " . $this->team_name . ")" : home_url();
+			$site_info = home_url();
+			$add_info  = $this->getServerIP() . ( $this->team_name ? " (Team " . $this->team_name . ")" : null );
 
-			$message = $site_info . "\n" . $event . "\n" . $link;
+			$message = $site_info . "\n" . $add_info . "\n" . $event . "\n" . $link;
 			if ( $user ) {
-				$message = $site_info . "\n" . $event . " " . $link . "\n" . $message_add;
+				$message = $site_info . "\n" . $add_info . "\n" . $event . " " . $link . "\n" . $message_add;
 			}
 
 			$bot->sendMessage( $chat_id, $message, null, false, null, null, false, $thread_id, null, null );
@@ -375,5 +376,14 @@ class HB_Link_Manager {
 		$handle = fopen( WP_CONTENT_DIR . "/hb_link_manager.log", "a" );
 		fwrite( $handle, $str . "\n" );
 		fclose( $handle );
+	}
+
+	//Get Server IP
+	private function getServerIP() {
+		if ( ! empty( $_SERVER['SERVER_ADDR'] ) ) {
+			return $_SERVER['SERVER_ADDR'];
+		}
+
+		return gethostbyname( $_SERVER['SERVER_NAME'] );
 	}
 }
