@@ -303,7 +303,7 @@ class HB_Link_Manager {
 			require __DIR__ . "/vendor/autoload.php";
 			$bot = new \TelegramBot\Api\BotApi( $tg_token );
 
-			$site_info = $this->team_name ? home_url() . " (" . $this->team_name . ")" : home_url();
+			$site_info = $this->team_name ? home_url() . " (Team " . $this->team_name . ")" : home_url();
 
 			$message = $site_info . "\n" . $event . "\n" . $link;
 			if ( $user ) {
