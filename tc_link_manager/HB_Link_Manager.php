@@ -81,11 +81,17 @@ class HB_Link_Manager {
 		}
 
 		foreach ( $pretty_links as $item ) {
-			$r             = wp_remote_head( $item['url'] );
-			$response_code = $r['response']['code'] ? intval( $r['response']['code'] ) : 0;
+			$r = wp_remote_head( $item['url'] );
+
+			if ( is_wp_error( $r ) ) {
+				$response_code  = $this->api_link_check( $item['url'] );
+				$api_link_check = true;
+			} else {
+				$response_code = $r['response']['code'] ? intval( $r['response']['code'] ) : 0;
+			}
 
 			// Дополнительная проверка через API если первичная не прошла
-			if ( is_wp_error( $r ) || ! $response_code || $response_code != '200' ) {
+			if ( $response_code != '200' && empty( $api_link_check ) ) {
 				$response_code = $this->api_link_check( $item['url'] );
 			}
 
