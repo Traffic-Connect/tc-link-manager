@@ -84,35 +84,24 @@ class HB_Link_Manager {
 			$r = wp_remote_head( $item['url'] );
 
 			if ( is_wp_error( $r ) ) {
-				$response_code  = $this->api_link_check( $item['url'] );
-				$api_link_check = true;
-			} else {
-				$response_code = $r['response']['code'] ? intval( $r['response']['code'] ) : 0;
-			}
-
-			// Дополнительная проверка через API если первичная не прошла
-			if ( $response_code != '200' && empty( $api_link_check ) ) {
-				$response_code = $this->api_link_check( $item['url'] );
-			}
-
-			if ( is_wp_error( $r ) && ! $response_code ) {
-				$error_message                        = $r->get_error_message() ?? 'unknown error';
 				$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'error',
-					$error_message );
-				$this->notification( $error_message, $item['url'], false, "broken" );
+					$r->get_error_message() );
+				$this->notification( $r->get_error_message(), $item['url'], false, "broken" );
 			} else {
-				if ( $response_code ) {
-					$msg                    = 'Response code: ' . $response_code;
+				if ( ! empty( $r['response']['code'] ) ) {
+					$msg                    = 'Response code: ' . $r['response']['code'];
 					$true_code_response_arr = explode( ',', $this->option['true_code_response'] );
 					$true_code_response_arr = array_map( 'trim', $true_code_response_arr );
 
-					if ( in_array( $response_code, $true_code_response_arr ) ) {
+					if ( in_array( $r['response']['code'], $true_code_response_arr ) ) {
 						$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'ok',
-							$response_code );
+							$r['response']['code'] );
 					} else {
 						$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'error', $msg );
-						$this->notification( 'Response code: ' . $response_code, $item['url'], false,
-							"broken" );
+						// Временно отправляем уведомление только для 404 кодов
+						if ( $r['response']['code'] == '404' ) {
+							$this->notification( 'Response code: ' . $r['response']['code'], $item['url'], false, "broken" );
+						}
 					}
 				} else {
 					$msg                                  = "Response code not defined";
@@ -127,40 +116,6 @@ class HB_Link_Manager {
 		}
 
 		update_option( 'tc_link_manager_version', $current_version );
-	}
-
-	/**
-	 * Дополнительная проверка ссылки через API
-	 *
-	 * @param  string  $url
-	 *
-	 * @return bool
-	 */
-	private function api_link_check( $url ) {
-		$api_url = $this->config['api']['check-aff-link'] ?? '';
-
-		if ( empty( $api_url ) ) {
-			return 0;
-		}
-
-		$check_url = $api_url . '?link=' . urlencode( $url );
-
-		$response = wp_remote_get( $check_url, [
-			'timeout' => 30,
-			'headers' => [ 'User-Agent' => 'TC-Link-Manager/1.0' ]
-		] );
-
-		if ( is_wp_error( $response ) ) {
-			return 0;
-		}
-
-		$data = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( json_last_error() !== JSON_ERROR_NONE ) {
-			return 0;
-		}
-
-		return $data['status_code'] ? intval( $data['status_code'] ) : 0;
 	}
 
 	/**
@@ -330,14 +285,14 @@ class HB_Link_Manager {
 		$manager_token = $this->config['api']['manager_token'] ?? '';
 
 		if ( empty( $manager_token ) ) {
-			return null;
+			return '';
 		}
 
 		// Извлекаем домен из home_url()
 		$domain = parse_url( home_url(), PHP_URL_HOST );
 
 		if ( empty( $domain ) ) {
-			return null;
+			return '';
 		}
 
 		$api_url     = 'https://manager.tcnct.com/api/site/team';
@@ -351,17 +306,17 @@ class HB_Link_Manager {
 		] );
 
 		if ( is_wp_error( $response ) ) {
-			return null;
+			return '';
 		}
 
 		$body = wp_remote_retrieve_body( $response );
 		$data = json_decode( $body, true );
 
 		if ( json_last_error() !== JSON_ERROR_NONE ) {
-			return null;
+			return '';
 		}
 
-		return $data['team'] ?? null;
+		return $data['team'] ?? '';
 	}
 
 	/**

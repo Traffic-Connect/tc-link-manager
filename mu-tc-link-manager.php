@@ -1,9 +1,9 @@
-<?php  
+<?php
 
 /*
 Plugin Name: TC Link Manager
 Description: Plugin sends info about links statuses to TG - bot
-Version: 1.8
+Version: 1.7
 Author: TC
 */
 
