@@ -1,2 +1,1 @@
-# tc-link-manager
-## Добавить все в wp-content/mu-plugins
+Script setup https://github.com/Traffic-Connect/tc-link-manager-installer
