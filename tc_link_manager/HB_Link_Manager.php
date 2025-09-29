@@ -5,11 +5,12 @@ class HB_Link_Manager {
 	public array $option;
 	public array $config;
 	private string $team_name;
+	public array $config_teams;
 
 	public function __construct() {
-		$this->option    = get_option( 'hb_link_manager_settings', [] );
-		$this->config    = require plugin_dir_path( __FILE__ ) . 'config.php';
-		$this->team_name = $this->get_team_name();
+		$this->option = get_option( 'hb_link_manager_settings', [] );
+		$this->config = require plugin_dir_path( __FILE__ ) . 'config.php';
+		$this->config_teams = require plugin_dir_path( __FILE__ ) . 'config-teams.php';
 
 		wp_clear_scheduled_hook( 'hb_link_manager_cron_hook' );
 		add_action( 'wp', [ $this, 'cron_activation' ] );
@@ -67,6 +68,7 @@ class HB_Link_Manager {
 	public function check_links() {
 		$hb_link_manager_links = get_option( 'hb_link_manager_links', [] );
 		$pretty_links          = HB_Link_Manager_Helpers::get_links_prli_links();
+		$this->team_name       = $this->get_team_name();
 
 		if ( ! function_exists( 'get_plugin_data' ) ) {
 			require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
@@ -100,7 +102,8 @@ class HB_Link_Manager {
 						$hb_link_manager_links[ $item['id'] ] = $this->build_option_links( $item['id'], 'error', $msg );
 						// Временно отправляем уведомление только для 404 кодов
 						if ( $r['response']['code'] == '404' ) {
-							$this->notification( 'Response code: ' . $r['response']['code'], $item['url'], false, "broken" );
+							$this->notification( 'Response code: ' . $r['response']['code'], $item['url'], false,
+								"broken" );
 						}
 					}
 				} else {
@@ -161,6 +164,7 @@ class HB_Link_Manager {
 	public function check_links_save_post( $post_id, $post ) {
 		$links                      = array();
 		$GLOBALS['acf_check_links'] = array();
+		$this->team_name            = $this->get_team_name();
 
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
@@ -273,6 +277,12 @@ class HB_Link_Manager {
 			}
 
 			$bot->sendMessage( $chat_id, $message, null, false, null, null, false, $thread_id, null, null );
+
+			if( $this->team_name && $this->team_name !== '' ){
+				if( isset( $this->config_teams[$this->team_name] ) && $this->config_teams[$this->team_name] !== '' ){
+					$bot->sendMessage( $this->config_teams[$this->team_name], $message );
+				}
+			}
 		}
 	}
 
