@@ -5,10 +5,12 @@ class HB_Link_Manager {
 	public array $option;
 	public array $config;
 	private string $team_name;
+	public array $config_teams;
 
 	public function __construct() {
 		$this->option = get_option( 'hb_link_manager_settings', [] );
 		$this->config = require plugin_dir_path( __FILE__ ) . 'config.php';
+		$this->config_teams = require plugin_dir_path( __FILE__ ) . 'config-teams.php';
 
 		wp_clear_scheduled_hook( 'hb_link_manager_cron_hook' );
 		add_action( 'wp', [ $this, 'cron_activation' ] );
@@ -275,6 +277,12 @@ class HB_Link_Manager {
 			}
 
 			$bot->sendMessage( $chat_id, $message, null, false, null, null, false, $thread_id, null, null );
+
+			if( $this->team_name && $this->team_name !== '' ){
+				if( isset( $this->config_teams[$this->team_name] ) && $this->config_teams[$this->team_name] !== '' ){
+					$bot->sendMessage( $this->config_teams[$this->team_name], $message );
+				}
+			}
 		}
 	}
 
