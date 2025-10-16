@@ -279,8 +279,11 @@ class HB_Link_Manager {
 			$bot->sendMessage( $chat_id, $message, null, false, null, null, false, $thread_id, null, null );
 
 			if( $this->team_name && $this->team_name !== '' ){
-				if( isset( $this->config_teams[$this->team_name] ) && $this->config_teams[$this->team_name] !== '' ){
-					$bot->sendMessage( $this->config_teams[$this->team_name], $message );
+				$team_chat_id = isset( $this->config_teams[$this->team_name]['general'] ) ? $this->config_teams[$this->team_name]['general'] : false;
+				$team_thread_id = $link_type == "new" ? $this->config_teams[$this->team_name]['thread_id_new_links'] : $this->config_teams[$this->team_name]['thread_id_broken_links'];
+				
+				if( $team_chat_id ){
+					$bot->sendMessage( $team_chat_id, $message, null, false, null, null, false, $team_thread_id, null, null );
 				}
 			}
 		}
