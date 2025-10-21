@@ -1,12 +1,15 @@
 <?php
 
 return [
-    '1' => '-4570732884', // Dev + Team 1
-    '2' => '-4853165070', // TEAM-2 Ping Links
-    '2-unit-1' => '-4853165070', // TEAM-2 Ping Links
-    '2-unit-2' => '-4853165070', // TEAM-2 Ping Links
-    '2-unit-3' => '-4853165070', // TEAM-2 Ping Links
-    '3' => '-4874767179', // Aff Links Check Team 3
-    '6' => '-4903414605', // Проверка ссылок Т6
-    '7' => '-4893886240' // Link Manager Team 7
+    '1' => [ 'general' => '-1003122405911', 'thread_id_new_links' => '2', 'thread_id_broken_links' => '4' ],
+    '1-unit-1' => [ 'general' => '-1003122405911', 'thread_id_new_links' => '2', 'thread_id_broken_links' => '4' ],
+    '1-unit-2' => [ 'general' => '-1003122405911', 'thread_id_new_links' => '2', 'thread_id_broken_links' => '4' ],
+    '1-unit-3' => [ 'general' => '-1003122405911', 'thread_id_new_links' => '2', 'thread_id_broken_links' => '4' ],
+    '1-unit-4' => [ 'general' => '-1003122405911', 'thread_id_new_links' => '2', 'thread_id_broken_links' => '4' ],
+    '2' => [ 'general' => '-1003138251375', 'thread_id_new_links' => '3', 'thread_id_broken_links' => '5' ],
+    '2-unit-1' => [ 'general' => '-1003138251375', 'thread_id_new_links' => '3', 'thread_id_broken_links' => '5' ],
+    '2-unit-2' => [ 'general' => '-1003138251375', 'thread_id_new_links' => '3', 'thread_id_broken_links' => '5' ],
+    '2-unit-3' => [ 'general' => '-1003138251375', 'thread_id_new_links' => '3', 'thread_id_broken_links' => '5' ],
+    '3' => [ 'general' => '-1003186542582', 'thread_id_new_links' => '2', 'thread_id_broken_links' => '5' ],
+    '6' => [ 'general' => '-1003067398343', 'thread_id_new_links' => '3', 'thread_id_broken_links' => '5' ]
 ];
