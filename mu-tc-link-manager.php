@@ -3,7 +3,7 @@
 /*
 Plugin Name: TC Link Manager
 Description: Plugin sends info about links statuses to TG - bot
-Version: 1.10
+Version: 1.11
 Author: TC
 */
 
