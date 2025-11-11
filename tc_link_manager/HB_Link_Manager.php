@@ -165,6 +165,7 @@ class HB_Link_Manager {
 		$links                      = array();
 		$GLOBALS['acf_check_links'] = array();
 		$this->team_name            = $this->get_team_name();
+		$exclude_links 				= $this->get_page_excluded_links( $post_id );
 
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
@@ -210,7 +211,7 @@ class HB_Link_Manager {
 			if ( $hb_link_manager_all_links ) {
 				$hb_link_manager_all_links_new = $hb_link_manager_all_links;
 				foreach ( $links_all as $link ) {
-					if ( ! in_array( $link, $hb_link_manager_all_links ) ) {
+					if ( ! in_array( $link, $hb_link_manager_all_links ) && ! in_array( rtrim($link, '/') . '/', $exclude_links, true ) ) {
 						$this->notification( "New link:", $link, true, "new" );
 						$hb_link_manager_all_links_new[] = $link;
 					}
@@ -353,5 +354,92 @@ class HB_Link_Manager {
 		}
 
 		return gethostbyname( $_SERVER['SERVER_NAME'] );
+	}
+
+	public function get_page_excluded_links( $post_id ){
+		$post = get_post( $post_id );
+		if ( ! $post instanceof \WP_Post ) {
+			return;
+		}
+
+		if ( 'publish' !== $post->post_status ) {
+			$this->exclude_links = [];
+			return;
+		}
+
+		$permalink = get_permalink( $post );
+		if ( ! $permalink ) {
+			return;
+		}
+
+		return $this->collect_head_links_from_url( $permalink );
+	}
+
+	private function collect_head_links_from_url( string $url ): array {
+		$resp = wp_remote_get( $url, [
+			'timeout'    => 8,
+			'redirection'=> 3,
+			'user-agent' => 'TC-Exclude-Links/1.0; ' . home_url('/'),
+		] );
+
+		if ( is_wp_error( $resp ) ) {
+			return [];
+		}
+
+		$code = wp_remote_retrieve_response_code( $resp );
+		if ( $code < 200 || $code >= 400 ) {
+			return [];
+		}
+
+		$body = wp_remote_retrieve_body( $resp );
+		if ( ! $body ) {
+			return [];
+		}
+
+		$head = $this->extract_head_html( $body );
+		if ( $head === '' ) {
+			return [];
+		}
+
+		$hrefs = $this->parse_link_hrefs( $head, [ 'canonical', 'alternate' ] );
+
+		$hrefs = array_map( 'esc_url_raw', $hrefs );
+		$hrefs = array_values( array_unique( array_filter( $hrefs ) ) );
+
+		return $hrefs;
+	}
+
+	private function extract_head_html( string $html ): string {
+		if ( preg_match( '~<head\b[^>]*>(.*?)</head>~is', $html, $m ) ) {
+			return $m[1] ?? '';
+		}
+		return '';
+	}
+
+	private function parse_link_hrefs( string $head_html, array $wanted_rels ): array {
+		$out = [];
+
+		$dom = new \DOMDocument();
+		libxml_use_internal_errors( true );
+		$dom->loadHTML( '<!DOCTYPE html><html><head>'.$head_html.'</head><body></body></html>', LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NOCDATA );
+		libxml_clear_errors();
+
+		$links = $dom->getElementsByTagName( 'link' );
+
+		foreach ( $links as $link ) {
+			$rel  = strtolower( trim( $link->getAttribute( 'rel' ) ?? '' ) );
+			$href = trim( $link->getAttribute( 'href' ) ?? '' );
+
+			if ( $href === '' || $rel === '' ) {
+				continue;
+			}
+
+			$rels = preg_split( '/\s+/', $rel );
+			if ( array_intersect( $wanted_rels, $rels ) ) {
+				$out[] = $href;
+			}
+		}
+
+		return $out;
 	}
 }
